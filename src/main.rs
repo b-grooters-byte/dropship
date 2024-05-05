@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-const SHIP_START_Y: f32 = 200.0;
+const SHIP_START_Y: f32 = 0.0;
 const SHIP_START_X: f32 = 0.0;
 const SHIP_START_VELOCITY_X: f32 = 500.0;
 const SHIP_COLOR: Color = Color::rgb(0.8, 0.8, 0.9);
@@ -15,19 +15,16 @@ fn main() {
         .run();
 }
 
-fn setup(mut commands: Commands) {
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Camera
     commands.spawn(Camera2dBundle::default());
     // ship
     commands.spawn((
         SpriteBundle {
+            texture: asset_server.load("lander-static.png"),
             transform: Transform {
+                rotation: Quat::from_rotation_z((30.0_f32).to_radians()),
                 translation: Vec3::new(SHIP_START_X, SHIP_START_Y, 0.0),
-                ..default()
-            },
-            sprite: Sprite {
-                color: SHIP_COLOR,
-                custom_size: Some(SHIP_SIZE),
                 ..default()
             },
             ..default()
