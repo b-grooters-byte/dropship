@@ -24,19 +24,29 @@ fn main() {
         .run();
 }
 
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>,
+mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,) {
+
+    let texture = asset_server.load("lander.png");
+    let texture_layout = TextureAtlasLayout::from_grid(Vec2{x: 64.0, y: 60.0}, 6,1, None, None);
+    let texture_atlas_layout = texture_atlas_layouts.add(texture_layout);
     // Camera
     commands.spawn(Camera2dBundle::default());
     // ship
     commands.spawn((
         SpriteBundle {
-            texture: asset_server.load("lander-static.png"),
             transform: Transform {
                 rotation: Quat::from_rotation_z((30.0_f32).to_radians()),
                 translation: Vec3::new(SHIP_START_X, SHIP_START_Y, 0.0),
                 ..default()
             },
+            texture,
             ..default()
+        },
+        TextureAtlas {
+            layout: texture_atlas_layout,
+            index: 0,
+
         },
         Ship,
         Velocity(Vec2::new(0.0, 0.0)),
