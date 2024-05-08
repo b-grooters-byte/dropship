@@ -20,7 +20,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_systems(Update, bevy::window::close_on_esc)
         .add_systems(Startup, setup)
-        .add_systems(FixedUpdate, apply_velocity)
+        .add_systems(FixedUpdate, (apply_rcs, apply_velocity))
         .run();
 }
 
@@ -49,8 +49,26 @@ mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,) {
 
         },
         Ship,
+        Rcs(Thruster::None),
         Velocity(Vec2::new(0.0, 0.0)),
     ));
+}
+
+fn apply_rcs(
+    input: Res<ButtonInput<KeyCode>>,
+    mut query: Query<(&mut Transform, &mut Rcs, &mut TextureAtlas)>,
+) {
+    let mut ship = query.single_mut();
+    let mut texture_atlas = ship.2;
+
+    if input.pressed(KeyCode::ArrowLeft) {
+        texture_atlas.index = 2;
+    } else if input.pressed(KeyCode::ArrowRight) {
+        texture_atlas.index = 4;
+    } else {
+        texture_atlas.index = 0;
+    }
+
 }
 
 fn apply_velocity(
@@ -64,11 +82,7 @@ fn apply_velocity(
     // caclulate acceleration due to gravity
     let gravity_accel = LUNAR_GRAVITY * 10.0;
     delta_velocity.y -= gravity_accel;
-    if input.pressed(KeyCode::ArrowLeft) {
-        delta_velocity.x -= 100.0;
-    } else if input.pressed(KeyCode::ArrowRight) {
-        delta_velocity.x += 100.0;
-    } else if input.pressed(KeyCode::ArrowUp) {
+    if input.pressed(KeyCode::ArrowUp) {
         delta_velocity.y += 100.0;
     } else if input.pressed(KeyCode::ArrowDown) {
         delta_velocity.y -= 100.0;
@@ -78,8 +92,18 @@ fn apply_velocity(
     ship_velocity.0.translation.y += ship_velocity.1 .0.y * time.delta_seconds();
 }
 
+
+enum Thruster {
+    None,
+    Left,
+    Right,
+}
+
 #[derive(Component)]
 struct Ship;
 
 #[derive(Component)]
 struct Velocity(Vec2);
+
+#[derive(Component)]
+struct Rcs(Thruster);
