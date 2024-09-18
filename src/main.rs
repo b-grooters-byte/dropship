@@ -12,7 +12,7 @@ const LANDER_FUEL_MASS: f32 = 5_000.0;
 const LANDER_THRUST_MAX: f32 = 33_750.0;
 // main engine minimum thrust in newtons
 const LANDER_THRUST_MIN: f32 = 4_500.0;
-// gravity in m/s/s
+// gravity in m/s2
 const LUNAR_GRAVITY: f32 = 1.625;
 const EUROPA_GRAVITY: f32 = 1.314;
 const IO_GRAVITY: f32 = 1.796;
@@ -56,7 +56,7 @@ mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,) {
         },
         Ship,
         Rcs(Thruster::None),
-        Velocity(Vec2::new(0.0, 0.0)),
+        Velocity(Vec3::new(0.0, 0.0, 0.0)),
     ));
 }
 
@@ -95,14 +95,19 @@ fn apply_velocity(
     mut query: Query<(&mut Transform, &mut Velocity)>,
 ) {
     let mut ship_velocity = query.single_mut();
-    let mut delta_velocity = Vec2::new(0.0, 0.0);
-
+    let mut delta_velocity = Vec3::new(0.0, 0.0, 0.0);
+    
     // caclulate acceleration due to gravity
     let gravity_accel = LUNAR_GRAVITY * 10.0;
-    delta_velocity.y -= gravity_accel;
     if input.pressed(KeyCode::ArrowUp) {
         delta_velocity.y += 100.0;
     } 
+    // muliply the delta velocity by Z rotation to get delta velocity based on
+    // off-axis thrust
+    delta_velocity = ship_velocity.0.rotation.mul_vec3(delta_velocity);
+    // gravity
+    delta_velocity.y -= gravity_accel;
+     
     ship_velocity.1 .0 += delta_velocity * time.delta_seconds();
 
     ship_velocity.0.translation.x += ship_velocity.1 .0.x * time.delta_seconds();
@@ -120,7 +125,7 @@ enum Thruster {
 struct Ship;
 
 #[derive(Component)]
-struct Velocity(Vec2);
+struct Velocity(Vec3);
 
 #[derive(Component)]
 struct Rcs(Thruster);
